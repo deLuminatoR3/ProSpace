@@ -13,34 +13,40 @@ percentage_error = 5
 
 updated_voltage = []
 
+#Function to generate new data and diplay it 
 def generate_data_and_display():
-    global updated_voltage
     
+    #Generate random voltage with some noise
+    global updated_voltage    
     voltage = np.random.uniform(min_voltage, max_voltage, num_samples)
     #voltage = (max_voltage - min_voltage) * np.random.rand(num_samples) + min_voltage
     #voltage = np.random.normal((max_voltage - min_voltage)/2, 1, num_samples)
     noise = np.random.normal(0, noise_level, num_samples)    
     voltage += noise
     
+    #Update the voltage values by ignoring existing values 
     updated_voltage = list(voltage)
     
+    #Calculate Analysis metrics
     mean_voltage = np.mean(voltage)
     std_dev_voltage = np.std(voltage)
     voltage_range = np.ptp(voltage)
     e = voltage_range * percentage_error / 100
     faulty_nozzles = np.where((voltage <= min_voltage+e) | (voltage >= max_voltage-e))[0]
     
+    #Update the Analysis metrics onto the GUI interface 
     label_mean.config(text=f"Mean Voltage: {mean_voltage:.2f}")
     label_std_dev.config(text=f"Standard Deviation: {std_dev_voltage:.2f}")
     label_range.config(text=f"Voltage Range: {voltage_range:.2f}")
     label_faulty_nozzles.config(text=f"Faulty Nozzles Indices: {faulty_nozzles}")
     
+    #Clear all previous plots
     axs[0].clear()
     axs[1].clear()
     axs[2].clear()
-    
     fig.suptitle('Sensor Data Analysis')
     
+    #Ploting all plots again
     faulty_index =  set(faulty_nozzles)
     for i, v in enumerate(voltage):
         if i in faulty_index:
@@ -57,10 +63,8 @@ def generate_data_and_display():
     
     faulty_voltages_count = len(faulty_index)
     non_faulty_voltages_count = len(voltage) - faulty_voltages_count
-
     sizes = [non_faulty_voltages_count, faulty_voltages_count]
     labels = ['Non-faulty', 'Faulty']
-
     axs[1].pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140)
     
     axs[2].hist(voltage, int(len(voltage)/3))
@@ -73,13 +77,16 @@ def generate_data_and_display():
     
     canvas.draw()
 
+#Function to generate new data, add it to the existing data and diplay it
 def update_data_and_display():
-    global updated_voltage
     
+    #Generate random voltage with some noise
+    global updated_voltage    
     voltage = np.random.uniform(min_voltage, max_voltage, num_samples)
     noise = np.random.normal(0, noise_level, num_samples)    
     voltage += noise
     
+    #Upadate the existing voltage values
     updated_voltage.extend(list(voltage))
     
     mean_voltage = np.mean(updated_voltage)
@@ -95,8 +102,7 @@ def update_data_and_display():
     
     axs[0].clear()
     axs[1].clear()
-    axs[2].clear()
-    
+    axs[2].clear()    
     fig.suptitle('Sensor Data Analysis')
     
     faulty_index =  set(faulty_nozzles)
@@ -115,10 +121,8 @@ def update_data_and_display():
     
     faulty_voltages_count = len(faulty_index)
     non_faulty_voltages_count = len(updated_voltage) - faulty_voltages_count
-
     sizes = [non_faulty_voltages_count, faulty_voltages_count]
     labels = ['Non-faulty', 'Faulty']
-
     axs[1].pie(sizes, labels=labels, autopct='%1.1f%%', startangle=140)
     
     axs[2].hist(updated_voltage, int(len(updated_voltage)/3))
@@ -131,9 +135,11 @@ def update_data_and_display():
     
     canvas.draw()
 
+#Create tkinter window
 root = tk.Tk()
 root.title("ProSpace: Sensor Data Generatation and Analysis")
 
+#Setup layouts for GUI
 label1 = tk.Label(root, 
                  text=f"Initial Parameters taken:",
                  font=('Helvetica 11 bold') ,justify='left', padx=25)
@@ -143,9 +149,11 @@ label2 = tk.Label(root,
                  font=('Helvetica 11') ,justify='left', padx=25)
 label2.grid(row=1, column=0, columnspan=3, sticky='w')
 
+#Creating frame to display the Analysis results
 frame = tk.LabelFrame(root, text='Data Analysis', padx=5, pady=5)
 frame.grid(row=2, column=0, columnspan=3, padx=10, pady=10)
 
+#Pushing the Plots and Analysis metrics to the frame
 fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(12,4))
 canvas = FigureCanvasTkAgg(fig, master=frame)
 canvas_widget = canvas.get_tk_widget()
@@ -161,15 +169,17 @@ label_std_dev.grid(row=1, column=1)
 label_range.grid(row=1, column=2)
 label_faulty_nozzles.grid(row=2, column=0, columnspan=3)
 
+#Creating buttons for exiting the program, generating and updating data
 button_exit = tk.Button(root, text="Exit Program", command=root.quit, padx=50, pady=10)
+button_generate_data = tk.Button(root, text='Generate Data', command=generate_data_and_display, padx=50, pady=10)
+button_update_data = tk.Button(root, text='Update Data', command=update_data_and_display, padx=50, pady=10)
+
 button_exit.grid(row=3, column=0, padx=5, pady=5)
+button_generate_data.grid(row=3, column=1, padx=5, pady=5)
+button_update_data.grid(row=3, column=2, padx=5, pady=5)
 
-button_gen_data = tk.Button(root, text='Generate Data', command=generate_data_and_display, padx=50, pady=10)
-button_gen_data.grid(row=3, column=1, padx=5, pady=5)
-
-button_gen_data = tk.Button(root, text='Update Data', command=update_data_and_display, padx=50, pady=10)
-button_gen_data.grid(row=3, column=2, padx=5, pady=5)
-
+#Generate and Display the initial data
 generate_data_and_display()
 
+#tkinter event loop
 root.mainloop()
